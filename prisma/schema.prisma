@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Moderator {
+  id           Int         @id @default(autoincrement())
+  email        String      @unique
+  name         String
+  password     String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  researchRoom ResearchRoom? @relation(fields: [roomId], references: [id])
+  roomId       Int?
+}
+
+model ResearchRoom {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  moderators  Moderator[]
+  respondents Respondent[]
+  discussions Discussion[]
+}
+
+model Respondent {
+  id           Int          @id @default(autoincrement())
+  email        String       @unique
+  name         String
+  password     String
+  points       Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  researchRoom ResearchRoom? @relation(fields: [roomId], references: [id])
+  roomId       Int?
+  responses    Response[]
+}
+
+model Discussion {
+  id                Int          @id @default(autoincrement())
+  title             String
+  details           String?
+  type              String       @default("close-ended") // "open-ended", "close-ended", "concept-rating"
+  allowMultiple     Boolean      @default(false)
+  askForComments    Boolean      @default(true)
+  showOtherResponses Boolean     @default(false)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  researchRoom      ResearchRoom @relation(fields: [roomId], references: [id])
+  roomId            Int
+  answers           Answer[]
+  responses         Response[]
+}
+
+model Answer {
+  id           Int        @id @default(autoincrement())
+  text         String
+  discussion   Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  discussionId Int
+  responses    Response[]
+}
+
+model Response {
+  id           Int        @id @default(autoincrement())
+  comment      String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  discussion   Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  discussionId Int
+  respondent   Respondent @relation(fields: [respondentId], references: [id], onDelete: Cascade)
+  respondentId Int
+  answers      Answer[]
+}
+
